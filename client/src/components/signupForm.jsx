@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import axios from 'axios';
+import React, { useState } from "react";
+import axios from "axios";
 const BASE_URL = import.meta.env.VITE_DEALBABA_URL;
 
 const SignupForm = () => {
@@ -7,6 +7,7 @@ const SignupForm = () => {
     name: "",
     email: "",
     phoneNumber: "",
+    countryCode: "+1", // Default country code
     password: "",
     role: "",
     userId: null,
@@ -16,6 +17,15 @@ const SignupForm = () => {
   const [step, setStep] = useState(1);
   const [otpSent, setOtpSent] = useState(false);
 
+  const countryCodes = [
+    { code: "+1", label: "🇺🇸 USA (+1)" },
+    { code: "+44", label: "🇬🇧 UK (+44)" },
+    { code: "+91", label: "🇮🇳 India (+91)" },
+    { code: "+61", label: "🇦🇺 Australia (+61)" },
+    { code: "+81", label: "🇯🇵 Japan (+81)" },
+    { code: "+971", label: "🇦🇪 UAE (+971)" },
+  ];
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -24,21 +34,24 @@ const SignupForm = () => {
   const handleSignup = async (e) => {
     e.preventDefault();
     try {
-      console.log(BASE_URL);  // Check if BASE_URL is correct
-      const response = await axios.post(`${BASE_URL}/api/auth/signup`, formData);
-      
-      
+      const phoneWithCode = `${formData.countryCode}${formData.phoneNumber}`;
+      const response = await axios.post(`${BASE_URL}/api/auth/signup`, {
+        ...formData,
+        phoneNumber: phoneWithCode, // Send concatenated phone number
+      });
+
       const userId = response.data.userId;
       if (userId) {
-        setFormData((prev) => ({ ...prev, userId })); 
+        setFormData((prev) => ({ ...prev, userId }));
         setOtpSent(true);
-        setStep(2); 
-                alert("Signup successful. Verify your email and phone.");
+        setStep(2);
+        alert("Signup successful. Verify your email and phone.");
       } else {
         alert("Signup successful, but no userId received.");
       }
     } catch (error) {
-      const errorMessage = error.response?.data?.message || "An error occurred. Please try again.";
+      const errorMessage =
+        error.response?.data?.message || "An error occurred. Please try again.";
       console.error("Signup error:", errorMessage);
       alert(errorMessage);
     }
@@ -50,15 +63,19 @@ const SignupForm = () => {
     try {
       const userId = formData.userId;
 
-      await axios.post("http://localhost:8000/api/auth/verify-otp", {
+      await axios.post(`${BASE_URL}/api/auth/verify-otp`, {
         otp,
         userId,
         type,
       });
 
-      alert(`${type === "email" ? "Email" : "Phone"} OTP Verified Successfully`);
+      alert(
+        `${type === "email" ? "Email" : "Phone"} OTP Verified Successfully`
+      );
     } catch (error) {
-      const errorMessage = error.response?.data?.message || "An error occurred during OTP verification.";
+      const errorMessage =
+        error.response?.data?.message ||
+        "An error occurred during OTP verification.";
       console.error(`Error verifying OTP for ${type}:`, errorMessage);
       alert(errorMessage);
     }
@@ -67,8 +84,7 @@ const SignupForm = () => {
   return (
     <div>
       <h2>Signup Form</h2>
-      
-      
+
       {step === 1 && (
         <form onSubmit={handleSignup}>
           <input
@@ -77,6 +93,7 @@ const SignupForm = () => {
             placeholder="Name"
             value={formData.name}
             onChange={handleInputChange}
+            required
           />
           <input
             type="email"
@@ -84,20 +101,39 @@ const SignupForm = () => {
             placeholder="Email"
             value={formData.email}
             onChange={handleInputChange}
+            required
           />
-          <input
-            type="text"
-            name="phoneNumber"
-            placeholder="Phone Number"
-            value={formData.phoneNumber}
-            onChange={handleInputChange}
-          />
+
+          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+            <select
+              name="countryCode"
+              value={formData.countryCode}
+              onChange={handleInputChange}
+              style={{ padding: "5px" }}
+            >
+              {countryCodes.map((country) => (
+                <option key={country.code} value={country.code}>
+                  {country.label}
+                </option>
+              ))}
+            </select>
+            <input
+              type="text"
+              name="phoneNumber"
+              placeholder="Phone Number"
+              value={formData.phoneNumber}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+
           <input
             type="password"
             name="password"
             placeholder="Password"
             value={formData.password}
             onChange={handleInputChange}
+            required
           />
           <input
             type="text"
@@ -105,17 +141,16 @@ const SignupForm = () => {
             placeholder="Role"
             value={formData.role}
             onChange={handleInputChange}
+            required
           />
           <button type="submit">Signup</button>
         </form>
       )}
 
-      
       {step === 2 && otpSent && (
         <div>
           <h3>Verify OTP</h3>
-          
-        
+
           <form onSubmit={(e) => handleVerifyOtp(e, "email")}>
             <input
               type="text"
@@ -125,8 +160,7 @@ const SignupForm = () => {
             />
             <button type="submit">Verify Email OTP</button>
           </form>
-          
-        
+
           <form onSubmit={(e) => handleVerifyOtp(e, "phone")}>
             <input
               type="text"
@@ -143,9 +177,3 @@ const SignupForm = () => {
 };
 
 export default SignupForm;
-
-
-
-
-
-

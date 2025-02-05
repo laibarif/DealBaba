@@ -31,6 +31,7 @@ function DealPage() {
         .get(`${BASE_URL}/api/deals/dealbyUserId/${userId}`)
         .then((response) => {
           setDeals(response.data.deals);
+          console.log("Deals",response.data.deals)
         })
         .catch((error) => {
           console.error("Error fetching deals:", error);

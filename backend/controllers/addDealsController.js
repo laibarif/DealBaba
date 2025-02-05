@@ -1,4 +1,4 @@
-const Deal = require('../models/addDealsModel.js');  
+const Deal = require('../models/addDealsModel.js');
 const cloudinary = require('../config/cloudinary.js');
 const DiscountRequest = require('../models/discountRequest.js')
 const User = require('../models/userModel.js')
@@ -19,14 +19,14 @@ const ftpConfig = {
 exports.addDeal = async (req, res) => {
   try {
     const { shopName, dealName, discount, description, userId } = req.body;
-    
+
     if (!req.file) {
       return res.status(400).json({ message: 'Image is required' });
     }
 
     const imageFile = req.file;
     const imageName = Date.now() + '-' + imageFile.originalname; // Create unique image name
-    
+
     // Initialize FTP client
     const client = new ftp.Client();
 
@@ -38,7 +38,7 @@ exports.addDeal = async (req, res) => {
 
       // Image URL (Assuming your website's base URL)
       const imageUrl = `https://dealbaba.com.au/images/${imageName}`;
-
+      console.log("Image Url", imageUrl)
       // Create a new deal entry with image URL
       const newDeal = await Deal.create({
         userId,
@@ -74,11 +74,10 @@ exports.addDeal = async (req, res) => {
     res.status(500).json({ message: 'Failed to add deal', error });
   }
 };
-
 // exports.addDeal = async (req, res) => {
 //   try {
 //     const { shopName, dealName, discount, description, userId } = req.body;
-
+// 	console.log("heree apu");
 //     if (!req.file) {
 //       return res.status(400).json({ message: 'Image is required' });
 //     }
@@ -104,7 +103,7 @@ exports.addDeal = async (req, res) => {
 
 exports.getAllFiles = async (req, res) => {
   try {
-    const deals = await Deal.findAll({}); 
+    const deals = await Deal.findAll({});
     res.status(200).json({ deals });
   } catch (error) {
     res.status(500).json({ message: 'Error fetching deals', error });
@@ -114,7 +113,7 @@ exports.getAllFiles = async (req, res) => {
 exports.getFileById = async (req, res) => {
   const { id } = req.params;
   try {
-    const deal = await Deal.findByPk(id); 
+    const deal = await Deal.findByPk(id);
     if (!deal) {
       return res.status(404).json({ message: 'Deal not found' });
     }
@@ -125,97 +124,184 @@ exports.getFileById = async (req, res) => {
 };
 
 exports.getFileByuserId = async (req, res) => {
-  const { userId } = req.params; 
+  const { userId } = req.params;
 
   try {
-    
-    const deals = await Deal.findAll({ where: { userId } }); 
+
+    const deals = await Deal.findAll({ where: { userId } });
     if (deals.length === 0) {
       return res.status(404).json({ message: 'No deals found for this user' });
     }
-    res.status(200).json({ deals }); 
+    res.status(200).json({ deals });
   } catch (error) {
     res.status(500).json({ message: 'Error fetching deals', error });
   }
 };
 
 
+// exports.updateFile = async (req, res) => {
+//   const { id } = req.params;
+//   const { shopName, dealName, discount, description } = req.body;
+
+//   let image = req.file ? req.file.filename : null; 
+
+//   try {
+//     const deal = await Deal.findByPk(id); 
+//     if (!deal) {
+//       return res.status(404).json({ message: 'Deal not found' });
+//     }
+
+//     const fieldsToUpdate = {};
+//     let hasChanges = false;
+
+//     if (shopName && shopName !== deal.shopName) {
+//       fieldsToUpdate.shopName = shopName;
+//       hasChanges = true;
+//     }
+
+//     if (dealName && dealName !== deal.dealName) {
+//       fieldsToUpdate.dealName = dealName;
+//       hasChanges = true;
+//     }
+
+//     if (discount && discount !== deal.discount) {
+//       fieldsToUpdate.discount = discount;
+//       hasChanges = true;
+//     }
+
+//     if (description && description !== deal.description) {
+//       fieldsToUpdate.description = description;
+//       hasChanges = true;
+//     }
+
+//     // If there's an image, update it
+//     if (image && image !== deal.image) {
+//       // Delete old image from the server
+//       const oldImagePath = path.join(__dirname, `../uploads/${deal.image}`);
+//       try {
+//         await fs.unlink(oldImagePath); // Ensure old image is deleted
+//       } catch (err) {
+//         console.error(`Error deleting old image: ${err}`);
+//       }
+
+
+//       fieldsToUpdate.image = image;
+//       hasChanges = true;
+//     }
+
+//     if (!hasChanges) {
+//       return res.status(400).json({ message: 'No changes made to the deal' });
+//     }
+
+//     const [updated] = await Deal.update(fieldsToUpdate, { where: { id } });
+
+//     if (updated === 0) {
+//       return res.status(404).json({ message: 'Deal not found or no changes made' });
+//     }
+
+//     const updatedDeal = await Deal.findByPk(id);
+//     res.status(200).json({ message: 'Deal updated successfully', updatedDeal });
+
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ message: 'Error updating deal', error });
+//   }
+// };
+
 exports.updateFile = async (req, res) => {
   const { id } = req.params;
   const { shopName, dealName, discount, description } = req.body;
-
-  let image = req.file ? req.file.filename : null; 
+  let image = req.file ? req.file.filename : null;
 
   try {
-    const deal = await Deal.findByPk(id); 
+    const deal = await Deal.findByPk(id);
     if (!deal) {
-      return res.status(404).json({ message: 'Deal not found' });
+      return res.status(404).json({ message: "❌ Deal not found" });
     }
 
     const fieldsToUpdate = {};
     let hasChanges = false;
-
+    
     if (shopName && shopName !== deal.shopName) {
       fieldsToUpdate.shopName = shopName;
       hasChanges = true;
     }
-
     if (dealName && dealName !== deal.dealName) {
       fieldsToUpdate.dealName = dealName;
       hasChanges = true;
     }
-
     if (discount && discount !== deal.discount) {
       fieldsToUpdate.discount = discount;
       hasChanges = true;
     }
-
     if (description && description !== deal.description) {
       fieldsToUpdate.description = description;
       hasChanges = true;
     }
 
-    // If there's an image, update it
-    if (image && image !== deal.image) {
-      // Delete old image from the server
-      const oldImagePath = path.join(__dirname, `../uploads/${deal.image}`);
-      try {
-        await fs.unlink(oldImagePath); // Ensure old image is deleted
-      } catch (err) {
-        console.error(`Error deleting old image: ${err}`);
+    const client = new ftp.Client();
+    client.ftp.verbose = true; // Enable FTP logs
+
+    try {
+      await client.access(ftpConfig);
+
+      // 🔹 Delete old image if exists
+      if (deal.image) {
+        const oldImageName = path.basename(deal.image);
+        const remoteOldImagePath = `/public_html/images/${oldImageName}`;
+        try {
+          await client.remove(remoteOldImagePath);
+          console.log(`✅ Deleted old image: ${remoteOldImagePath}`);
+        } catch (err) {
+          console.warn(`⚠️ Old image not found on FTP: ${remoteOldImagePath}`);
+        }
       }
 
-      
-      fieldsToUpdate.image = image;
-      hasChanges = true;
+      // 🔹 Upload new image if provided
+      if (image) {
+        const localImagePath = path.join(__dirname, "../uploads/", image); // Adjust if needed
+        const remoteImagePath = `/public_html/images/${image}`;
+
+        try {
+          await fs.access(localImagePath); // ✅ Use async fs.promises.access to check if file exists
+          await client.uploadFrom(localImagePath, remoteImagePath);
+          console.log(`✅ Uploaded new image: ${remoteImagePath}`);
+
+          // 🔹 Update database with new image URL
+          fieldsToUpdate.image = `https://dealbaba.com.au/images/${image}`;
+          hasChanges = true;
+        } catch (fileError) {
+          console.error(`❌ Image not found locally: ${localImagePath}`);
+          return res.status(500).json({ message: "❌ Image upload failed, file missing" });
+        }
+      }
+    } catch (ftpError) {
+      console.error(`❌ FTP Error: ${ftpError}`);
+      return res.status(500).json({ message: "❌ FTP Upload Failed" });
+    } finally {
+      client.close();
     }
 
     if (!hasChanges) {
-      return res.status(400).json({ message: 'No changes made to the deal' });
+      return res.status(400).json({ message: "⚠️ No changes made" });
     }
 
-    const [updated] = await Deal.update(fieldsToUpdate, { where: { id } });
-
-    if (updated === 0) {
-      return res.status(404).json({ message: 'Deal not found or no changes made' });
-    }
-
+    await Deal.update(fieldsToUpdate, { where: { id } });
     const updatedDeal = await Deal.findByPk(id);
-    res.status(200).json({ message: 'Deal updated successfully', updatedDeal });
+    res.status(200).json({ message: "✅ Deal updated successfully", updatedDeal });
 
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error updating deal', error });
+    console.error("❌ Error updating deal:", error);
+    res.status(500).json({ message: "❌ Server error", error });
   }
 };
-
 
 
 exports.deleteFile = async (req, res) => {
   const { id } = req.params;
 
   try {
-   
+
     await DiscountRequest.destroy({ where: { dealId: id } });
 
     const deal = await Deal.findByPk(id);
@@ -227,10 +313,10 @@ exports.deleteFile = async (req, res) => {
     if (deal.image) {
       const imagePath = path.join(__dirname, `../uploads/${deal.image}`);
       try {
-        
+
         const fileExists = await fs.stat(imagePath);
         if (fileExists) {
-          await fs.unlink(imagePath); 
+          await fs.unlink(imagePath);
           console.log(`Image deleted: ${imagePath}`);
         } else {
           console.warn(`Image does not exist: ${imagePath}`);
@@ -240,7 +326,7 @@ exports.deleteFile = async (req, res) => {
       }
     }
 
-   
+
     await deal.destroy();
     res.status(200).json({ message: "Deal deleted successfully" });
 
@@ -249,14 +335,14 @@ exports.deleteFile = async (req, res) => {
     res.status(500).json({ message: "Error deleting deal", error });
   }
 };
-  
+
 
 
 exports.requestDiscount = async (req, res) => {
-  const { userId,dealId } = req.body; 
+  const { userId, dealId } = req.body;
 
   try {
-   
+
     const existingRequest = await DiscountRequest.findOne({
       where: { userId, dealId }
     });
@@ -290,10 +376,10 @@ exports.getDiscountRequests = async (req, res) => {
   }
 
   try {
-   
+
     const deals = await Deal.findAll({
       where: {
-        userId: userId 
+        userId: userId
       }
     });
 
@@ -306,22 +392,22 @@ exports.getDiscountRequests = async (req, res) => {
     const discountRequests = await DiscountRequest.findAll({
       where: {
         dealId: {
-          [Op.in]: dealIds 
+          [Op.in]: dealIds
         }
       },
       include: [
         {
           model: Deal,
           required: true,
-          attributes: ['dealName','userId'], 
+          attributes: ['dealName', 'userId'],
         },
         {
           model: User,
           required: true,
-          attributes: ['name', 'phoneNumber', 'isVerified'], 
+          attributes: ['name', 'phoneNumber', 'isVerified'],
         }
       ],
-      attributes: ['id', 'isApproved'], 
+      attributes: ['id', 'isApproved'],
     });
 
     if (discountRequests.length === 0) {
@@ -343,16 +429,16 @@ exports.getDiscountRequests = async (req, res) => {
 
 
 exports.approveDiscount = async (req, res) => {
-  const { requestId } = req.params; 
-  const { shopOwnerId } = req.body; 
+  const { requestId } = req.params;
+  const { shopOwnerId } = req.body;
 
   try {
     const discountRequest = await DiscountRequest.findByPk(requestId, {
-      include: [Deal, User] 
+      include: [Deal, User]
     });
 
     if (!discountRequest) {
-     
+
       return res.status(404).json({ message: 'Discount request not found' });
     }
 
@@ -361,7 +447,7 @@ exports.approveDiscount = async (req, res) => {
       return res.status(403).json({ message: 'You are not authorized to approve this discount.' });
     }
 
-    discountRequest.isApproved = true; 
+    discountRequest.isApproved = true;
 
     await discountRequest.save();
 
@@ -370,7 +456,7 @@ exports.approveDiscount = async (req, res) => {
       discountRequest
     });
   } catch (error) {
-    
+
     console.error('Error approving discount:', error);
     res.status(500).json({ message: 'Failed to approve discount', error: error.message });
   }
@@ -378,22 +464,22 @@ exports.approveDiscount = async (req, res) => {
 
 
 exports.getDiscountRequestByDealId = async (req, res) => {
-  const { userId,dealId } = req.query; 
- 
+  const { userId, dealId } = req.query;
+
 
   try {
     const discountRequest = await DiscountRequest.findOne({
       where: { dealId, userId },
     });
-  
-    const isApproved = discountRequest ? discountRequest.isApproved : false; 
-  
+
+    const isApproved = discountRequest ? discountRequest.isApproved : false;
+
     res.json({ isApproved });
   } catch (error) {
     console.error('Error fetching discount request:', error);
     res.status(500).json({ message: 'Error fetching discount request', error });
   }
-  
+
 
 }
 
@@ -411,7 +497,7 @@ exports.DiscountVisibility = async (req, res) => {
       return res.status(403).json({ message: 'You are not authorized to perform this action' });
     }
 
-    deal.isVisibleToOwner = !deal.isVisibleToOwner; 
+    deal.isVisibleToOwner = !deal.isVisibleToOwner;
     await deal.save();
 
     res.status(200).json({
