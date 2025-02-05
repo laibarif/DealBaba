@@ -30,7 +30,6 @@ const signup = async (req, res) => {
   const { name, email, password, role, phoneNumber, gender } = req.body;
 
   try {
-    
     const existingUser = await User.findOne({
       where: {
         [Sequelize.Op.or]: [
@@ -44,7 +43,8 @@ const signup = async (req, res) => {
       return res.status(400).json({ message: 'Email or Phone Number already exists' });
     }
 
-    const pendingUser = await User.PendingUsers({
+    // Corrected query to PendingUsers model
+    const pendingUser = await PendingUsers.findOne({
       where: {
         [Sequelize.Op.or]: [
           { email: email },
@@ -54,7 +54,7 @@ const signup = async (req, res) => {
     });
 
     if (pendingUser) {
-      return res.status(400).json({ message: 'Email or Phone Number already exists' });
+      return res.status(400).json({ message: 'Email or Phone Number already exists in pending users' });
     }
 
     const emailOtp = generateOtp();
@@ -85,11 +85,6 @@ const signup = async (req, res) => {
     res.status(500).json({ message: 'Server error during signup' });
   }
 };
-
-
-
-
-
 
 
 

@@ -11,17 +11,28 @@ const CreateUser = () => {
     password: "",
     role: "",
     phoneNumber: "",
-    gender: ""
+    countryCode: "+1", // Default country code
+    gender: "",
   });
 
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
+  const countryCodes = [
+    { code: "+1", label: "(+1) USA" },
+    { code: "+44", label: "(+44) UK" },
+    { code: "+92", label: "(+92) PAK" },
+    { code: "+91", label: "(+91) IND" },
+    { code: "+61", label: "(+61) AUS" },
+    { code: "+81", label: "(+81) JAP" },
+    { code: "+971", label: "(+971) UAE" },
+  ];
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
       ...prevData,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -30,8 +41,14 @@ const CreateUser = () => {
     setSuccessMessage("");
     setErrorMessage("");
 
+    // Concatenate country code and phone number
+    const phoneWithCode = `${formData.countryCode}${formData.phoneNumber}`;
+
     try {
-      const response = await axios.post(`${BASE_URL}/api/users`, formData);
+      const response = await axios.post(`${BASE_URL}/api/users`, {
+        ...formData,
+        phoneNumber: phoneWithCode, // Send full phone number to backend
+      });
       setSuccessMessage("User created successfully!");
       setFormData({
         name: "",
@@ -39,7 +56,8 @@ const CreateUser = () => {
         password: "",
         role: "",
         phoneNumber: "",
-        gender: ""
+        gender: "",
+        countryCode: "+1", // Reset country code
       });
       navigate("/admin/dashboard");
     } catch (error) {
@@ -124,18 +142,32 @@ const CreateUser = () => {
               <label className="block text-black font-medium mb-1">
                 Phone Number
               </label>
-              <input
-                type="tel"
-                name="phoneNumber"
-                value={formData.phoneNumber}
-                onChange={handleChange}
-                placeholder="Enter phone number"
-                className="w-full px-4 py-2 text-black border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-              <p className="text-sm text-gray-500 mt-1">
-                Please enter the country code before the phone number.
-              </p>
+              <div className="flex items-center">
+                {/* Country Code Dropdown */}
+                <select
+                  name="countryCode"
+                  value={formData.countryCode}
+                  onChange={handleChange}
+                  className="w-24 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {countryCodes.map((country) => (
+                    <option key={country.code} value={country.code}>
+                      {country.label}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Phone Number Input */}
+                <input
+                  type="tel"
+                  name="phoneNumber"
+                  value={formData.phoneNumber}
+                  onChange={handleChange}
+                  placeholder="Enter phone number"
+                  className="w-full px-4 py-2 text-black border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
             </div>
           </div>
 
